@@ -1,5 +1,8 @@
 import telebot
+from db_client import Database
 from botmarkup import ExecutorTree, CustomerTree
+from parsers import vk, instagram, telegram
+
 
 token = '886563861:AAHBaV1huqzmOCOmrTmfuce39MA6OC0VD10'
 bot = telebot.TeleBot(token, threaded=False)
@@ -11,13 +14,15 @@ class User:
         bot users class
 
         :param id_: equals Telegram user id
-        :param role: may be Заказчик, Исполнитель, None in main menu
+        :param role: may be Заказчик or Исполнитель, None in main menu
         """
         self.id_ = id_
         self.role = role
         self.tasks = []
         self.place = [] # onclick button append button name to that list
         self.referal = 0 # number of invited users
+
+
 
 
 @bot.message_handler(commands=["start"])# /start command and button
@@ -31,6 +36,11 @@ def handle_start(message):
     except: pass
     if user_id not in USERS:
         USERS[user_id] = User(user_id, None)
+        try:
+            users_db.insert_user(user_id, 0, 0)
+        except:
+            # TODO fetching user data from db
+            pass
     else:
         USERS[user_id].place = []
         USERS[user_id].role = None
@@ -110,7 +120,6 @@ def handle_main(message):
         return
 
 
-#def handlers(message, user_id, USERS):
 def handle_executor(message):
     user_id = message.from_user.id
     user = USERS[user_id]
@@ -220,40 +229,18 @@ def handle_customer(message):
                              reply_markup=markup)
 
 
-class InstagramParser:
-    def __init__(self):
-        pass
+def vk_change_id(message):
+    username = message.text.split("vk.com")[1].strip("/")
+    vk_id = vkparser._get_user_id(username)
+    users_db.update_user(message.from_user.id, _vk_id=vk_id)
 
-    def get_like(self):
-        pass
-
-    def get_comment(self):
-        pass
-
-    def get_follower(self):
-        pass
-
-
-class VKParser:
-    def __init__(self):
-        pass
-
-    def get_like(self):
-        pass
-
-    def get_comment(self):
-        pass
-
-    def get_follower(self):
-        pass
-
-class TelegramParser:
-    def __init__(self):
-        pass
-
-    def get_follower(self):
-        pass
-
+def insta_change_id(message):
+    username = message.text.split("instagram.com")[1].strip("/")
+    insta_id = instaparser._get_id_by_username(username)
+    users_db.update_user(message.from_user.id, _insta_id=insta_id)
 
 if __name__ == "__main__":
+    users_db = Database("users.db")
+    vkparser = vk.VKParser()
+    instaparser = instagram.InstagramParser()
     bot.polling(none_stop=True)

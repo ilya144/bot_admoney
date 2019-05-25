@@ -1,4 +1,5 @@
 import sqlite3
+import time
 
 
 class Database:
@@ -92,7 +93,8 @@ class Database:
                         "task_social text, "
                         "task_name text, "
                         "task_link text, "
-                        "status int)")
+                        "status int, "
+                        "time int)")
         except:
             pass
 
@@ -165,13 +167,15 @@ class Database:
     def insert_task(self, customer_id, task_id,
                    task_social, task_name, task_link):
 
+        unix_time = int(time.time())
         cur = self.__connect_db()
         cur.execute("insert into tasks values ("
                     f"{task_id}, {customer_id}, null,"
                     f" '{task_social}', "
                     f" '{task_name}', "
                     f" '{task_link}', "
-                    "0)")
+                    f"0,{unix_time})"
+                    )
         self.__commit_db()
         self.__close_db()
 
@@ -217,3 +221,23 @@ class Database:
         self.__commit_db()
         self.__close_db()
         return task
+
+    def fetch_tasks_by_customer(self, user_id):
+        cur = self.__connect_db()
+        tasks = cur.execute("select * from tasks "
+                           f"where customer_id = {user_id} "
+                            "order by time desc"
+                           ).fetchall()
+        self.__commit_db()
+        self.__close_db()
+        return tasks
+
+    def fetch_tasks_by_executor(self, user_id):
+        cur = self.__connect_db()
+        tasks = cur.execute("select * from tasks "
+                           f"where executor_id = {user_id} "
+                            "order by time desc"
+                           ).fetchall()
+        self.__commit_db()
+        self.__close_db()
+        return tasks

@@ -1,3 +1,8 @@
+# TODO del all, cause this is actually shit
+#
+#
+#
+
 import telebot
 from db_client import Database
 from botmarkup import ExecutorTree, CustomerTree
@@ -7,11 +12,11 @@ from parsers import vk, instagram, telegram
 token = '886563861:AAHBaV1huqzmOCOmrTmfuce39MA6OC0VD10'
 bot = telebot.TeleBot(token, threaded=False)
 
-USERS = {} #dict of users, key is the user id
-class User:
+self.users = {} #dict of self.users, key is the user id
+class User(Database):
     def __init__(self, id_, role):
         """
-        bot users class
+        bot self.users class, inherit from Database
 
         :param id_: equals Telegram user id
         :param role: may be Заказчик or Исполнитель, None in main menu
@@ -20,7 +25,10 @@ class User:
         self.role = role
         self.tasks = []
         self.place = [] # onclick button append button name to that list
-        self.referal = 0 # number of invited users
+        self.referal = 0 # number of invited self.users
+        # TODO db_inteface, could be an inheritance
+        # !!! I MOVE IT TO user.py
+        # TODO del
 
 
 
@@ -29,21 +37,21 @@ class User:
 def handle_start(message):
     user_id = message.from_user.id
     try:
-        if int(message.text[7:]) in USERS and user_id not in USERS:
-            u = USERS[int(message.text[7:])]
+        if int(message.text[7:]) in self.users and user_id not in self.users:
+            u = self.users[int(message.text[7:])]
             u.referal+=1
             #db.update_user(u.ID, u.activedays, u.get_accs(),u.referal)
     except: pass
-    if user_id not in USERS:
-        USERS[user_id] = User(user_id, None)
+    if user_id not in self.users:
+        self.users[user_id] = User(user_id, None)
         try:
-            users_db.insert_user(user_id, 0, 0)
+            self.users_db.insert_user(user_id, 0, 0)
         except:
             # TODO fetching user data from db
             pass
     else:
-        USERS[user_id].place = []
-        USERS[user_id].role = None
+        self.users[user_id].place = []
+        self.users[user_id].role = None
 
     user_markup = telebot.types.ReplyKeyboardMarkup(True, False)
     user_markup.row('Я Исполнитель', 'Я Заказчик')
@@ -57,11 +65,11 @@ def handle_start(message):
 def handle_main(message):
     user_id = message.from_user.id
 
-    if user_id not in USERS:
+    if user_id not in self.users:
         handle_start(message)
         return
     else:
-        user = USERS[user_id]
+        user = self.users[user_id]
 
     if message.text == 'Я Исполнитель':
 
@@ -122,7 +130,7 @@ def handle_main(message):
 
 def handle_executor(message):
     user_id = message.from_user.id
-    user = USERS[user_id]
+    user = self.users[user_id]
     markup_tree = ExecutorTree()
 
     if message.text == "Мой профиль" and user.place[-1] == 'Я Исполнитель':
@@ -176,7 +184,7 @@ def handle_executor(message):
 
 def handle_customer(message):
     user_id = message.from_user.id
-    user = USERS[user_id]
+    user = self.users[user_id]
     markup_tree = CustomerTree()
 
     if message.text == 'Мой профиль' and user.place[-1] == 'Я Заказчик':
@@ -228,19 +236,20 @@ def handle_customer(message):
                              'Выбери действие',
                              reply_markup=markup)
 
+# TODO del
+# def vk_change_id(message):
+#     username = message.text.split("vk.com")[1].strip("/")
+#     vk_id = vkparser._get_user_id(username)
+#     self.users_db.update_user(message.from_user.id, _vk_id=vk_id)
+#
+# def insta_change_id(message):
+#     username = message.text.split("instagram.com")[1].strip("/")
+#     insta_id = instaparser._get_id_by_username(username)
+#     self.users_db.update_user(message.from_user.id, _insta_id=insta_id)
 
-def vk_change_id(message):
-    username = message.text.split("vk.com")[1].strip("/")
-    vk_id = vkparser._get_user_id(username)
-    users_db.update_user(message.from_user.id, _vk_id=vk_id)
-
-def insta_change_id(message):
-    username = message.text.split("instagram.com")[1].strip("/")
-    insta_id = instaparser._get_id_by_username(username)
-    users_db.update_user(message.from_user.id, _insta_id=insta_id)
 
 if __name__ == "__main__":
-    users_db = Database("users.db")
-    vkparser = vk.VKParser()
-    instaparser = instagram.InstagramParser()
+    self.users_db = Database("self.users.db")
+    #vkparser = vk.VKParser()
+    #instaparser = instagram.InstagramParser()
     bot.polling(none_stop=True)

@@ -15,12 +15,13 @@ class Bot(telebot.TeleBot):
 
 
     def __template_handler(self, message, reply_text, social: bool = False):
-        if user.role == "Заказчик":
-            markup_tree = ExecutorTree
-        elif user.role == "Исполнитель":
-            markup_tree = CustomerTree
-
         user = self.users[message.from_user.id]
+
+        if user.role == "Заказчик":
+            markup_tree = CustomerTree
+        elif user.role == "Исполнитель":
+            markup_tree = ExecutorTree
+
         if social:
             markup = markup_tree.get_reply_markup('%s && %s' % (message.text, user.place[-1]))
         else:
@@ -47,7 +48,7 @@ class Bot(telebot.TeleBot):
 
         user_markup = telebot.types.ReplyKeyboardMarkup(True, False)
         user_markup.row('Я Исполнитель', 'Я Заказчик')
-        bot.send_message(user_id,
+        self.send_message(user_id,
                          'Добро пожаловать в *Ad-Money*!\nВыберите, кто вы',
                          reply_markup=user_markup,
                          parse_mode="Markdown")
@@ -56,7 +57,7 @@ class Bot(telebot.TeleBot):
         user_id = message.from_user.id
 
         if user_id not in self.users:
-            handle_start(message)
+            self.__start_reply(message)
             return
         else:
             user = self.users[user_id]
@@ -78,7 +79,7 @@ class Bot(telebot.TeleBot):
             return
 
         if message.text == 'Главное меню':
-            handle_start(message)
+            self.__start_reply(message)
             return
 
         if message.text == 'Назад':
@@ -88,7 +89,7 @@ class Bot(telebot.TeleBot):
                 user.place.pop()
                 message.text = user.place[-1]
                 user.place.pop()
-                handle_main(message)
+                self.__text_reply(message)
             return
 
 
@@ -101,9 +102,9 @@ class Bot(telebot.TeleBot):
             return
 
         if message.text == 'Партнерская программа':
-            bot.send_message(message.from_user.id,
+            self.send_message(message.from_user.id,
                              'Ваша реферальная ссылка '
-                             f't.me/advertmoney_bot?start={user_id}\n'
+                             f't.me/advertmoney_self.start={user_id}\n'
                              f'Приглашено {user.referal} пользователей')
 
     def __executor_menu(self, message):

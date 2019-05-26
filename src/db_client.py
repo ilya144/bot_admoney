@@ -18,7 +18,8 @@ class Database:
 
     def __update_columns_users(self,
                                referal=None, vk_id=None,
-                               insta_id=None, money=None):
+                               insta_id=None, money=None,
+                               subscribe=None):
 
         sql_str = ""
 
@@ -33,6 +34,9 @@ class Database:
 
         if money!=None:
             sql_str += f"money={money}, "
+
+        if subscribe!=None:
+            sql_str += f"subscribe={subscribe}, "
 
 
         sql_str = sql_str.rstrip(", ")
@@ -70,8 +74,11 @@ class Database:
     def __create_user_table(self, cur):
         """
         user_id means telegram_id
-        :param cur:
-        :return:
+
+        subscribe column like a chmod linux
+        {4: Инстаграм, 2: ВК, 1: Телеграм}
+        7 all, 0 no one
+
         """
         try:
             cur.execute("create table users ("
@@ -79,7 +86,8 @@ class Database:
                         "vk_id int null unique, "
                         "insta_id int null unique, "
                         "referal int, "
-                        "money real)")
+                        "money real, "
+                        "subscribe int)")
         except:
             pass
 
@@ -113,11 +121,11 @@ class Database:
 
 
     ########### USER MANAGEMENT ###########
-    def insert_user(self, user_id, referal, money):
+    def insert_user(self, user_id, referal, money, subscribe=0):
         cur = self.__connect_db()
         cur.execute("insert into users values("
                     f"{user_id}, null, null, "
-                    f"{referal}, {money})")
+                    f"{referal}, {money}, {subscribe})")
         self.__commit_db()
         self.__close_db()
         return True
@@ -131,13 +139,15 @@ class Database:
                 : insta_id: same, fetched by username
                 : referal: amount of invited users
                 : money: user money in rubles
+                : subscribe: get new tasks
         :return:
         """
         set_sql = self.__update_columns_users(
             vk_id=kwargs.get("vk_id"),
             insta_id=kwargs.get("insta_id"),
             referal=kwargs.get("referal"),
-            oney=kwargs.get("money")
+            money=kwargs.get("money"),
+            subscribe=kwargs.get("subscribe")
         )
         cur = self.__connect_db()
         cur.execute(f"update users set {set_sql} "

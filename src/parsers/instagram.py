@@ -16,7 +16,7 @@ class InstagramParser:
         media_id = parsed_data["graphql"]["shortcode_media"]["id"]
         return media_id
 
-    def _get_id_by_username(self, username):
+    def __get_id_by_username(self, username):
         user_id = self.api.username_info(username)['user']['pk']
         return user_id
 
@@ -26,7 +26,7 @@ class InstagramParser:
         return username in [liker['username'] for liker in likers]
 
     def check_comment(self, media_url, username) -> bool:
-        media_id = self.__get_media_id(media_url)
+        media_id = self._get_media_id(media_url)
         comments = self.api.media_comments(media_id)['comments']
         commentators = set([comment['user']['username'] for comment in comments])
         return username in commentators
@@ -37,13 +37,31 @@ class InstagramParser:
         :param username: that's 'another' user
         :return: True if username found in followers
         """
-        user_id = self._get_id_by_username(target)
+        user_id = self.__get_id_by_username(target)
         fetched_user = self.api.user_followers(user_id, self.api.generate_uuid(), query=username)['users']
         return username in [user['username'] for user in fetched_user]
+
+    def check_media_url(self, media_url) -> bool:
+        try:
+            self.__get_media_id(media_url)
+        except:
+            return False
+
+        return True
+
+    def check_username(self, username) -> bool:
+        try:
+            self.__get_id_by_username(username)
+        except:
+            return False
+
+        return True
 
 
 if __name__ == "__main__":#mercedesbenz - login
     x = InstagramParser()
-    print(x.check_like('https://www.instagram.com/p/BxEH_Yco8th/', 'vip_smm_inst'))
-    print(x.check_comment('https://www.instagram.com/p/BxFDKGjJKx6/', 'vip_smm_inst'))
-    print(x.check_follow_by('vip_smm_inst', 'maximatech_worldshop'))
+    # print(x.check_like('https://www.instagram.com/p/BxEH_Yco8th/', 'vip_smm_inst'))
+    # print(x.check_comment('https://www.instagram.com/p/BxFDKGjJKx6/', 'vip_smm_inst'))
+    # print(x.check_follow_by('vip_smm_inst', 'maximatech_worldshop'))
+    # print(x.check_media_url("https://www.instagram.com/p/BxEH_Yco8th/"))
+    # print(x.check_username("vip_smm_inst"))

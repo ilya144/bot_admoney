@@ -17,11 +17,15 @@ class MarkupTree:
     def __inline_markup(buttons: list) -> telebot.types.InlineKeyboardMarkup:
         " buttons looks like [[one, two],[one_on_next_row, ...], ...]"
         markup = telebot.types.InlineKeyboardMarkup()
+        new_buttons = []
         for row in buttons:
-            if type(row) == str:
-                markup.row(row)
-            else:
-                markup.row(*row)
+            new_row = []
+            for button in row:
+                but_obj = telebot.types.InlineKeyboardButton(**button)
+                new_row.append(but_obj)
+            new_buttons.append(new_row)
+        for row in new_buttons:
+            markup.row(*row)
         return markup
 
     @classmethod
@@ -160,9 +164,17 @@ class CustomerTree(MarkupTree):
         ('Назад', 'Главное меню')
     ]
 
-    prices = [
-        ('Инстаграм', 'ВК', 'Телеграм'),
-        ('Назад', 'Главное меню')
+    prices = [# change to inline
+        #('Инстаграм', 'ВК', 'Телеграм'),
+        #('Назад', 'Главное меню')
+        (
+            {"text": 'Инстаграм',
+             "callback_data": "Цены-Инстаграм"},
+            {"text": 'ВК',
+             "callback_data": "Цены-ВК"},
+            {"text": 'Телеграм',
+             "callback_data": "Цены-Телеграм"}
+         )
     ]
 
 

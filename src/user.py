@@ -27,7 +27,7 @@ class User(Database):
 
     def __init__(self, user_id, role=None):
         """
-        bot users class, inherit from Database interface
+        bot users class, inherited from Database interface
 
         :param user_id: equals Telegram user id
         :param role: may be Заказчик or Исполнитель, None in main menu
@@ -96,8 +96,18 @@ class User(Database):
 
 
     def check_task(self, task_id):
-        pass
         # TODO make checker via parsers
+        task = self.fetch_task_by_id(task_id)
+
+        if task[4] == "instagram":
+            pass
+
+        elif task[4] == "vk":
+            pass
+
+        elif task[4] == "telegram":
+            pass
+
 
 
 if __name__ == '__main__':

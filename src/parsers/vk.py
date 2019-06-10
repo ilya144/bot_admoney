@@ -74,6 +74,14 @@ class VKParser:
         user_id = json.loads(response.content)['response'][0]['id']
         return user_id
 
+    def _get_group_id(self, group_ids):
+        response = requests.get("https://api.vk.com/method/groups.getById"
+                                f"?group_ids={group_ids}&v=5.52"
+                                f"&access_token={self.token}")
+
+        group_id = json.loads(response.content)['response'][0]['id']
+        return group_id
+
     def _isLiked(self, post_url, user_id) -> dict:
         owner_id, item_id = post_url.split('_')
         response = requests.get("https://api.vk.com/method/likes.isLiked"
@@ -108,23 +116,38 @@ class VKParser:
         else:
             return False
 
-    def check_follow_by(self, public_id, user_id) -> bool:
+    def check_follow_by(self, group_id, user_id) -> bool:
         response = requests.get("https://api.vk.com/method/groups.isMember"
-                                f"?group_id={public_id}"
+                                f"?group_id={group_id}"
                                 f"&user_id={user_id}&v=5.52"
                                 f"&access_token={self.token_auth}"
                                 f"&extended=1")
         isMember = json.loads(response.content)['response']['member']
         return bool(isMember)
 
+    def check_post_url(self, post_url) -> bool:
+        post_ids = post_url.split("wall")[1]
+        response = requests.get("https://api.vk.com/method/wall.getById"
+                                f"?posts={post_ids}&v=5.52"
+                                f"&access_token={self.token}")
+
+        try:
+            post_id = json.loads(response.content)['response'][0]['id']
+        except:
+            return False
+
+        return True
+
+
 if __name__ == '__main__':
 
     parser = VKParser()
-    print(parser._get_user_id("id387340775"))
+    # print(parser._get_user_id("id387340775"))
+    # print(parser._get_group_id("linuxclub7777"))
+    print(parser.check_post_url("https://vk.com/linuxclub?w=wall-121871413249_49989"))
+    # a = vk_api.VkApi(parser.email,parser.password)
+    # a._vk_login()
 
-    #a = vk_api.VkApi(parser.email,parser.password)
-    #a._vk_login()
 
-
-    #parser._refresh_auth_token()
+    # parser._refresh_auth_token()
 

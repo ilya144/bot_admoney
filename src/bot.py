@@ -10,11 +10,18 @@ class Bot(telebot.TeleBot):
 
         self.users = {} # key - telegram id, value - User obj
 
-        self.message_handler(commands=["start"])(self.__start_reply)
-        self.message_handler(content_types=['text'])(self.__text_reply)
+        self.message_handler(commands=["start"]
+                             )(self.__start_reply)
+
+        self.message_handler(content_types=['text']
+                             )(self.__text_reply)
+
+        self.callback_query_handler(func=lambda call: True
+                                    )(self.__query_inline)
 
 
-    def __template_handler(self, message, reply_text, social: bool = False):
+    def __template_handler(self, message, reply_text,
+                           social: bool = False, inline: bool = False):
         user = self.users[message.from_user.id]
 
         if user.role == "Заказчик":
@@ -22,11 +29,16 @@ class Bot(telebot.TeleBot):
         elif user.role == "Исполнитель":
             markup_tree = ExecutorTree
 
-        if social:
-            markup = markup_tree.get_reply_markup('%s && %s' % (message.text, user.place[-1]))
+        if not inline:
+            if social:
+                markup = markup_tree.get_reply_markup('%s && %s' % (message.text,
+                                                                    user.place[-1])
+                                                      )
+            else:
+                markup = markup_tree.get_reply_markup(message.text)
+            user.place.append(message.text)
         else:
-            markup = markup_tree.get_reply_markup(message.text)
-        user.place.append(message.text)
+            markup = markup_tree.get_inline_markup(message.text)
         self.send_message(message.from_user.id,
                           reply_text, reply_markup=markup)
 
@@ -92,6 +104,11 @@ class Bot(telebot.TeleBot):
                 self.__text_reply(message)
             return
 
+        if message.text == 'Партнерская программа':
+            self.send_message(message.from_user.id,
+                             'Ваша реферальная ссылка '
+                             f't.me/advertmoney_self.start={user_id}\n'
+                             f'Приглашено {user.referal} пользователей')
 
         if message.text and user.role == 'Исполнитель':
             self.__executor_menu(message)
@@ -101,11 +118,7 @@ class Bot(telebot.TeleBot):
             self.__customer_menu(message)
             return
 
-        if message.text == 'Партнерская программа':
-            self.send_message(message.from_user.id,
-                             'Ваша реферальная ссылка '
-                             f't.me/advertmoney_self.start={user_id}\n'
-                             f'Приглашено {user.referal} пользователей')
+
 
     def __executor_menu(self, message):
         user_id = message.from_user.id
@@ -116,15 +129,19 @@ class Bot(telebot.TeleBot):
 
         if message.text == 'Задания' and user.place[-1] == 'Я Исполнитель':
             self.__template_handler(message, 'Выбери задание')
+            # TODO making tasks
 
         if message.text == 'Соц сети' and user.place[-1] == 'Мой профиль':
             self.__template_handler(message, 'Выбери социальную сеть')
+            # TODO changing username in social networks
 
         if message.text == 'Баланс' and user.place[-1] == 'Мой профиль':
             self.__template_handler(message, 'Выбери действие')
+            # TODO inline menu with payment
 
         if message.text == 'Подписка' and user.place[-1] == 'Мой профиль':
             self.__template_handler(message, 'Выбери социальную сеть')
+            #TODO subscribe elems like vk - not subscribed and inline
 
         if message.text in ('Инстаграм', 'ВК', 'Телеграм'):
             self.__template_handler(message, 'Выбери действие', social=True)
@@ -138,15 +155,31 @@ class Bot(telebot.TeleBot):
 
         if message.text == 'Задания' and user.place[-1] == 'Я Заказчик':
             self.__template_handler(message, 'Выбери задание')
+            # TODO adding tasks and taking money from customer
 
         if message.text == 'Соц сети' and user.place[-1] == 'Мой профиль':
             self.__template_handler(message, 'Выбери социальную сеть')
+            # TODO same username changing
 
         if message.text == 'Баланс' and user.place[-1] == 'Я Заказчик':
             self.__template_handler(message, 'Выбери действие')
+            # TODO same showing money and payment
 
         if message.text == 'Цены' and user.place[-1] == 'Я Заказчик':
-            self.__template_handler(message, 'Выбери социальную сеть')
+            self.__template_handler(message,
+                                    'Для какой соц сети показать цены?',
+                                    inline=True)
+            #TODO ask about prices and make sample text
 
         if message.text in ('Инстаграм', 'ВК', 'Телеграм'):
             self.__template_handler(message, 'Выбери действие', social=True)
+            # TODO make task additing, and all with that stuff
+
+    def __query_inline(self, call):
+        user_id = call.message.chat.id
+
+        if user_id not in self.users:
+            self.__start_reply(message)
+            return
+        else:
+            user = self.users[user_id]

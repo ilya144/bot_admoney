@@ -15,14 +15,16 @@ class User(Database):
             self.vk_id,\
             self.insta_id,\
             self.referal,\
-            self.money = current_user
+            self.money,\
+            self.subscribe = current_user
 
     def __save_user(self):
         self.update_user(self.user_id,
-                         _vk_id = self.vk_id,
-                         _insta_id = self.insta_id,
-                         _referal = self.referal,
-                         _money = self.money)
+                         vk_id = self.vk_id,
+                         insta_id = self.insta_id,
+                         referal = self.referal,
+                         money = self.money,
+                         subscribe = self.subscribe)
 
 
     def __init__(self, user_id, role=None):
@@ -40,6 +42,7 @@ class User(Database):
 
         self.referal = 0  # number of invited users
         self.money = 0 # rub
+        self.subscribe = 0 # 0 no one sub, 7 - vk, insta, telegram
 
         self.role = role
         self.tasks = []
@@ -65,16 +68,17 @@ class User(Database):
         self.__save_user()
 
 
-    def add_task(self, task_social, task_name, task_link):
+    def add_task(self, **kwargs):
         while True:
             task_id = randint(10000001, 99999999) # 8 digit id
             if self.fetch_task_by_id(task_id) == None:
                 break
         if self.role == "Заказчик":
             self.insert_task(self.user_id, task_id,
-                             task_social,
-                             task_name,
-                             task_link)
+                             kwargs['actions'],
+                             kwargs['task_social'],
+                             kwargs['task_name'],
+                             kwargs['task_link'])
 
     def accept_task(self, task_id):
         task = self.fetch_task_by_id(task_id)

@@ -24,10 +24,10 @@ class Database:
         sql_str = ""
 
         if vk_id!=None:
-            sql_str += f"vk_id={vk_id}, "
+            sql_str += f"vk_id='{vk_id}', "
 
         if insta_id!=None:
-            sql_str += f"insta_id={insta_id}, "
+            sql_str += f"insta_id='{insta_id}', "
 
         if referal!=None:
             sql_str += f"referal={referal}, "
@@ -43,7 +43,7 @@ class Database:
         return sql_str
 
     def __update_columns_tasks(self,
-                               customer_id=None, executor_id=None,
+                               customer_id=None, actions=None,
                                task_social=None, task_name=None,
                                task_link=None, status=None):
 
@@ -52,8 +52,8 @@ class Database:
         if customer_id != None:
             sql_str += f"customer_id={customer_id}, "
 
-        if executor_id != None:
-            sql_str += f"executor_id={executor_id}, "
+        if actions != None:
+            sql_str += f"actions={actions}, "
 
         if task_social != None:
             sql_str += f"task_social='{task_social}', "
@@ -73,7 +73,9 @@ class Database:
 
     def __create_user_table(self, cur):
         """
-        user_id means telegram_id
+        user_id means telegram_id,
+        insta and vk id actually means usernames
+        (sorry for misunderstanding)
 
         subscribe column like a chmod linux
         {4: Инстаграм, 2: ВК, 1: Телеграм}
@@ -83,11 +85,12 @@ class Database:
         try:
             cur.execute("create table users ("
                         "user_id int unique, "
-                        "vk_id int null unique, "
-                        "insta_id int null unique, "
+                        "vk_id text null unique, "
+                        "insta_id text null unique, "
                         "referal int, "
                         "money real, "
-                        "subscribe int)")
+                        "subscribe int, "
+                        "primary key (user_id))")
         except:
             pass
 
@@ -97,14 +100,29 @@ class Database:
             cur.execute("create table tasks ("
                         "task_id int unique, "
                         "customer_id int, "
-                        "executor_id int null, "
+                        "actions int, "
                         "task_social text, "
                         "task_name text, "
                         "task_link text, "
                         "status int, "
-                        "time int)")
-        except:
-            pass
+                        "time int, "
+                        "primary key (task_id))")
+                        #"ON DELETE CASCADE)") # ? добавил, гляну шо будет
+        except Exception as e:
+            print(str(e))
+
+    def __create_executors_table(self, cur):
+
+        try:
+            cur.execute("create table executors ("
+                        "user_id int references users(user_id)"
+                        "on delete cascade, "
+                        "task_id int references tasks(task_id)"
+                        "on delete cascade,"
+                        "status int"
+                        ")")
+        except Exception as e:
+            print(str(e))
 
 
 
@@ -115,6 +133,7 @@ class Database:
 
         self.__create_user_table(cur)
         self.__create_task_table(cur)
+        self.__create_executors_table(cur)
 
         self.__close_db()
 
@@ -174,13 +193,14 @@ class Database:
 
 
     ########### TASK MANAGEMENT ###########
-    def insert_task(self, customer_id, task_id,
+    def insert_task(self, customer_id, task_id, actions,
                    task_social, task_name, task_link):
 
         unix_time = int(time.time())
         cur = self.__connect_db()
         cur.execute("insert into tasks values ("
-                    f"{task_id}, {customer_id}, null,"
+                    f"{task_id}, {customer_id}, "
+                    f"{actions}, "
                     f" '{task_social}', "
                     f" '{task_name}', "
                     f" '{task_link}', "
@@ -195,7 +215,7 @@ class Database:
         :param task_id: unique id of task
         :param kwargs:
                 : customer_id: who pay and create task
-                : executor_id: who accept and work
+                : actions: count of max executors
                 : task_social: vk, insta or telegram
                 : task_name: like, follow, etc
                 : task_link: url to object of task
@@ -204,7 +224,7 @@ class Database:
         """
         set_sql = self.__update_columns_tasks(
             customer_id=kwargs.get("customer_id"),
-            executor_id=kwargs.get("executor_id"),
+            actions=kwargs.get("actions"),
             task_social=kwargs.get("task_social"),
             task_name=kwargs.get("task_name"),
             task_link=kwargs.get("task_link"),
@@ -242,12 +262,38 @@ class Database:
         self.__close_db()
         return tasks
 
+
+
+    ########### EXECUTORS MANAGEMENT ###########
+    def insert_executor(self, user_id, task_id):
+        cur = self.__connect_db()
+        cur.execute("insert into executors values ("
+                    f"{user_id}, {task_id}, 0)"
+                    )
+        self.__commit_db()
+        self.__close_db()
+
     def fetch_tasks_by_executor(self, user_id):
         cur = self.__connect_db()
-        tasks = cur.execute("select * from tasks "
-                           f"where executor_id = {user_id} "
-                            "order by time desc"
-                           ).fetchall()
+        query = "select task_id, customer_id, " \
+                "actions, task_social, task_name, " \
+                "task_link, status, time from" \
+                "users inner join executors" \
+                "on tasks.user_id = executors.task_id"
+
+        tasks = cur.execute(query).fetchall()
         self.__commit_db()
         self.__close_db()
         return tasks
+
+    def fetch_executors_by_tasks(self, task_id):
+        cur = self.__connect_db()
+        query = "select user_id, vk_id, insta_id," \
+                "referal, money, subscribe" \
+                "from tasks inner join executors" \
+                "on users.task_id = executors.task_id"
+
+        users = cur.execute(query).fetchall()
+        self.__commit_db()
+        self.__close_db()
+        return users

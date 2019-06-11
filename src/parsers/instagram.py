@@ -5,7 +5,8 @@ import json
 
 class InstagramParser:
     def __init__(self):
-        self.api = Client(username="vip_smm_inst", password="vipsmm777")#(username="_yana_sun1_", password="instaprogo")
+        self.api = Client(username="_smmtarget_", password="Ii12345gg!")
+        # Client(username="vip_smm_inst", password="vipsmm777")#(username="_yana_sun1_", password="instaprogo")
 
     def __get_media_id(self, media_url):
         response = requests.get(media_url+"?__a=1")

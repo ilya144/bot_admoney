@@ -67,6 +67,9 @@ class User(Database):
         self.money = money
         self.__save_user()
 
+    def change_subscribe(self, subscribe):
+        self.subscribe = subscribe
+        self.__save_user()
 
     def add_task(self, **kwargs):
         while True:

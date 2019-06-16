@@ -77,8 +77,20 @@ class ExecutorTree(MarkupTree):
     # -- inline -- but not yet by now
 
     subscribe = [
-        ('Инстаграм', 'ВК', 'Телеграм'),
-        ('Назад', 'Главное меню')
+        (
+            {"text": 'Инстаграм',
+             "callback_data": "Подписка-Инстаграм"},
+            {"text": 'ВК',
+             "callback_data": "Подписка-ВК"},
+            {"text": 'Телеграм',
+             "callback_data": "Подписка-Телеграм"}
+         ),
+        (
+            {"text": 'Подписаться на всё',
+             "callback_data": "Подписка-7"},
+            {"text": 'Отписаться от всех заданий',
+             "callback_data": "Подписка-0"}
+         )
     ]
 
     instagram_settings = [

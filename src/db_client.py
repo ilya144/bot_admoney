@@ -91,8 +91,11 @@ class Database:
                         "money real, "
                         "subscribe int, "
                         "primary key (user_id))")
-        except:
-            pass
+        except Exception as e:
+            if (str(e) == "table users already exists"):
+                pass
+            else:
+                print(str(e))
 
     def __create_task_table(self, cur):
 
@@ -109,7 +112,10 @@ class Database:
                         "primary key (task_id))")
                         #"ON DELETE CASCADE)") # ? добавил, гляну шо будет
         except Exception as e:
-            print(str(e))
+            if (str(e) == "table tasks already exists"):
+                pass
+            else:
+                print(str(e))
 
     def __create_executors_table(self, cur):
 
@@ -122,7 +128,10 @@ class Database:
                         "status int"
                         ")")
         except Exception as e:
-            print(str(e))
+            if (str(e) == "table executors already exists"):
+                pass
+            else:
+                print(str(e))
 
 
 
@@ -258,6 +267,17 @@ class Database:
                            f"where customer_id = {user_id} "
                             "order by time desc"
                            ).fetchall()
+        self.__commit_db()
+        self.__close_db()
+        return tasks
+
+    def fetch_tasks_by_attr(self, task_social, task_name):
+        cur = self.__connect_db()
+        tasks = cur.execute("select * from tasks "
+                            f"where task_social = '{task_social}' "
+                            f"and task_name = '{task_name}' "
+                            "order by time desc"
+                            ).fetchall()
         self.__commit_db()
         self.__close_db()
         return tasks

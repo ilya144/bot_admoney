@@ -229,3 +229,18 @@ class CustomerTree(MarkupTree):
         'ВК && Задания': vk_tasks,
         'Телеграм && Задания': telegram_tasks,
     }
+
+######################################################################
+###                                                                ###
+###                       О Б Щ Е Е                                ###
+###                                                                ###
+######################################################################
+
+class OtherTree(MarkupTree):
+
+    input_markup = telebot.types.ReplyKeyboardMarkup(True, True)
+    input_markup.row('Отмена')
+
+    confirm_markup = telebot.types.ReplyKeyboardMarkup(True, True)
+    confirm_markup.row("Подтвердить")
+    confirm_markup.row('Отмена')

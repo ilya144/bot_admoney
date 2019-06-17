@@ -11,11 +11,11 @@ class VKParser:
                         "redirect_uri=https://oauth.vk.com/blank.html" \
                         "&response_type=token&v=5.95"
 
-        self.email = "gggmocha000777@mail.ru"
-        self.password = "kolxoz1488"
+        self.email = ""#"gggmocha000777@mail.ru"
+        self.password = ""#"kolxoz1488"
 
         self.token = "26bc0b4526bc0b4526bc0b456e26d63974226bc26bc0b457a7c9e0e5f7465ade086ee59"
-        self.token_auth = "119942bebd630abe4b5bfe4d1fba714adbedf444d0e64b16a1e2e0d39460e80ae15cb81b1364269f0fccc"
+        self.token_auth = "168892987e834182cd2eecfc78413ffe5eacd8f7d18fee0a8bb0ce98ef4457f0cc9e4faa5df16ce223a6b"
 
     def _refresh_auth_token(self) -> str:
         # TODO вход в вк через requests
@@ -137,6 +137,13 @@ class VKParser:
             return False
 
         return True
+
+    def check_username(self, username):
+        try:
+            user_id = self._get_user_id(username)
+            return user_id
+        except:
+            raise Exception("User not found")
 
 
 if __name__ == '__main__':

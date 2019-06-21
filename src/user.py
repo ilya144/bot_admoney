@@ -101,24 +101,5 @@ class User(Database):
         self.update_task(task_id, executor_id=self.user_id)
 
 
-
-    def check_task(self, task_id):
-        # TODO make checker via parsers
-        task = self.fetch_task_by_id(task_id)
-
-        if task[4] == "instagram":
-            pass
-
-        elif task[4] == "vk":
-            pass
-
-        elif task[4] == "telegram":
-            pass
-
-
-
-if __name__ == '__main__':
-    i = User(1, "Заказчик")
-    #i.add_task("vk", "like", "dislive.me")
-    #i.add_task("insta", "follow", "bash.im")
-    print(i.fetch_tasks_by_customer(i.user_id))
+    def join_to_executors(self, task_id, status):
+        self.insert_executor(self.user_id, task_id, status)

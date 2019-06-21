@@ -285,10 +285,10 @@ class Database:
 
 
     ########### EXECUTORS MANAGEMENT ###########
-    def insert_executor(self, user_id, task_id):
+    def insert_executor(self, user_id, task_id, status):
         cur = self.__connect_db()
         cur.execute("insert into executors values ("
-                    f"{user_id}, {task_id}, 0)"
+                    f"{user_id}, {task_id}, {status})"
                     )
         self.__commit_db()
         self.__close_db()

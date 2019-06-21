@@ -57,12 +57,3 @@ class InstagramParser:
             return False
 
         return True
-
-
-if __name__ == "__main__":#mercedesbenz - login
-    x = InstagramParser()
-    # print(x.check_like('https://www.instagram.com/p/BxEH_Yco8th/', 'vip_smm_inst'))
-    # print(x.check_comment('https://www.instagram.com/p/BxFDKGjJKx6/', 'vip_smm_inst'))
-    # print(x.check_follow_by('vip_smm_inst', 'maximatech_worldshop'))
-    # print(x.check_media_url("https://www.instagram.com/p/BxEH_Yco8th/"))
-    # print(x.check_username("vip_smm_inst"))

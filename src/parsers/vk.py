@@ -145,6 +145,14 @@ class VKParser:
         except:
             raise Exception("User not found")
 
+    def check_group_url(self, group_url):
+        try:
+            group_id = self._get_group_id(group_url)
+        except:
+            return False
+        if group_id:
+            return True
+
 
 if __name__ == '__main__':
 

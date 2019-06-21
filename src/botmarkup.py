@@ -244,3 +244,12 @@ class OtherTree(MarkupTree):
     confirm_markup = telebot.types.ReplyKeyboardMarkup(True, True)
     confirm_markup.row("Подтвердить")
     confirm_markup.row('Отмена')
+
+    @classmethod
+    def task_check_markup(cls, task_id):
+        task_markup = telebot.types.InlineKeyboardMarkup()
+        task_markup.add(telebot.types.InlineKeyboardButton(
+                        text="Проверить", callback_data=f'Проверить-{task_id}')
+        )
+
+        return task_markup

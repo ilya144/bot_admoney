@@ -1,5 +1,6 @@
 from botmarkup import ExecutorTree, CustomerTree, OtherTree
 from parsers import vk, instagram, telegram
+from parsers.link_validator import Validator
 from user import User
 import telebot
 
@@ -257,21 +258,51 @@ class Bot(telebot.TeleBot):
             message.text = user.place.pop()
             self.__text_reply(message)
             return
-        # TODO task link validation
+
         link = message.text.lstrip('https://www.')
-        task['task_link'] = message.text
-        user.add_task(**task)
-        self.send_message(message.chat.id,
-                          "Задание успешно добавлено")
-        message.text = user.place.pop()
-        self.__text_reply(message)
-        return
+        task['task_link'] = 'https://www.%s'%link
+        Validator
+        if not Validator.validate_task_link(**task):
+            self.send_message(message.chat.id,
+                              "Неправильно указана ссылка,"
+                              "проверьте ввод",
+                              reply_markup=OtherTree.input_markup)
+            self.register_next_step_handler(msg,
+                                            lambda message:
+                                            self.__task_link(message,
+                                                             task,
+                                                             user)
+                                            )
+
+        msg = self.send_message(message.chat.id,
+                                "Подтвердите задание:\n\n",
+                                f"Социальная сеть: {task['task_social']}\n"
+                                f"Задание: {task[4]}\n"
+                                f"Кол-во действий: {task['actions']}\n"
+                                f"Ссылка: {task['task_link']}\n\n"
+                                f"Цена: {task['cost']} рублей",
+                                reply_markup=OtherTree.confirm_markup)
+
+        self.register_next_step_handler(msg,
+                                        lambda message:
+                                        self.__task_confirm(message,
+                                                            task,
+                                                            user)
+                                        )
+
 
     def __task_confirm(self, message, task: dict, user):
-        self.send_message(message.chat.id,
-                          "Подтвердите задание",
-                          #TODO confirm task message text
-                          reply_markup=OtherTree.confirm_markup)
+        if message.text == 'Отмена':
+            message.text = user.place.pop()
+            self.__text_reply(message)
+            return
+        elif message.text == 'Подтвердить':
+            user.add_task(**task)
+            self.send_message(message.chat.id,
+                              "Задание успешно добавлено")
+            message.text = user.place.pop()
+            self.__text_reply(message)
+            return
 
     def __task_list(self, message, user):
         tasks = user.fetch_tasks_by_attr(user.place[-1], message.text)
@@ -279,11 +310,14 @@ class Bot(telebot.TeleBot):
             self.send_message(user.user_id, "Заданий нет")
         else:
             for task in tasks:
+                task_markup = OtherTree.task_check_markup(task[0])
+
                 self.send_message(user.user_id,
-                                  f"Задание #{task[0]}\n"
+                                  f"task #{task[0]}\n"
                                   f"Социальная сеть: {task[3]}\n"
                                   f"Задание: {task[4]}\n"
-                                  f"Ссылка: {task[5]}\n")
+                                  f"Ссылка: {task[5]}\n",
+                                  reply_markup=task_markup)
 
 
     def __task_accept(self, message, user):
@@ -301,7 +335,6 @@ class Bot(telebot.TeleBot):
 
         if message.text == 'Задания' and user.place[-1] == 'Я Исполнитель':
             self.__template_handler(message, 'Выбери задание')
-            # TODO making tasks
 
         if message.text == 'Баланс' and user.place[-1] == 'Мой профиль':
             self.__template_handler(message, 'Выбери действие')
@@ -459,9 +492,41 @@ class Bot(telebot.TeleBot):
                     text="Биткоины", callback_data='Bitcoin'))
             keyboard.add(telebot.types.InlineKeyboardButton(
                     text="Назад", callback_data='To Ref'))
-            bot.edit_message_text(chat_id=call.message.chat.id,
-                                  message_id=call.message.message_id,
-                                  text="Выберите способ оплаты")
-            bot.edit_message_reply_markup(chat_id=call.message.chat.id,
-                                  message_id=call.message.message_id,
-                                  reply_markup=keyboard)
+            self.edit_message_text(chat_id=call.message.chat.id,
+                                   message_id=call.message.message_id,
+                                   text="Выберите способ оплаты")
+            self.edit_message_reply_markup(chat_id=call.message.chat.id,
+                                           message_id=call.message.message_id,
+                                           reply_markup=keyboard)
+
+        if 'Проверить' in call.data:
+            task_id = call.data.split('-')[1]
+            task = user.fetch_task_by_id(task_id)
+
+            if 'Назад' in call.data:
+                self.edit_message_text(chat_id=call.message.chat.id,
+                                       message_id=call.message.message_id,
+                                       text=f"task #{task[0]}\n"
+                                       f"Социальная сеть: {task[3]}\n"
+                                       f"Задание: {task[4]}\n"
+                                       f"Ссылка: {task[5]}\n",
+                                       reply_markup=task_markup)
+
+            if Validator.validate_task_completed(task):
+                user.join_to_executors(task_id, status=1)
+
+                self.edit_message_text(chat_id=call.message.chat.id,
+                                       message_id=call.message.message_id,
+                                       text="Задание успешно выполнено")
+            else:
+                keyboard = telebot.types.InlineKeyboardMarkup()
+                keyboard.add(telebot.types.InlineKeyboardButton(
+                    text="Назад", callback_data='Назад-%s'%call.data))
+                self.edit_message_text(chat_id=call.message.chat.id,
+                                       message_id=call.message.message_id,
+                                       text="Задание успешно выполнено",
+                                       reply_markup=keyboard)
+
+
+
+
